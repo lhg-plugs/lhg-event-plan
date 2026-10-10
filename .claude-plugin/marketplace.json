@@ -1,0 +1,1 @@
+{"$schema":"https://json.schemastore.org/claude-code-marketplace.json","name":"lhg-plugs","owner":{"name":"刘洪光"},"plugins":[{"description":"活动策划专家：目标→预算/排期/风险清单→物料核查→执行手册→复盘报告，筹备期一条龙","name":"lhg-event-plan","source":"./"}]}
