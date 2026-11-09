@@ -1,91 +1,108 @@
 <!-- About 简介（推送后填写到仓库 About 栏）：
-小白一句话→完整活动方案：目标拆解、预算编制、排期甘特、风险清单、物料核查、复盘报告一条龙 ｜ 一键安装：/plugin marketplace add lhg-plugs/lhg-event-plan
+小白一句话→完整活动方案：目标拆解、预算编制、排期甘特、风险清单、物料核查、复盘报告，筹备期一条龙。 ｜ 一键安装：/plugin marketplace add lhg-plugs/lhg-event-plan
 -->
-<!-- topics（推送后打）：claude-code, claude-plugin, agent-skills, event-planning, conference, marketing -->
+<!-- topics（推送后打）：claude-code, claude-plugin, agent-skills, event, planning, budget, schedule, risk -->
 
-# lhg-event-plan：活动策划专家
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="lhg-event-plan — 小白一句话→完整活动方案">
+</p>
 
-> **一句话介绍**：给 AI 助手装上"活动策划全流程"——目标拆解、预算编制、排期甘特、风险清单、物料核查、执行手册、复盘报告，筹备期一条龙，小白也能办出专业水准的活动。
->
-> **一键安装**：在 Claude Code 里运行
-> ```
-> /plugin marketplace add lhg-plugs/lhg-event-plan
-> /plugin install lhg-event-plan@lhg-plugs
-> ```
+> **一句话介绍**：小白一句话→完整活动方案：目标拆解、预算编制、排期甘特、风险清单、物料核查、复盘报告，筹备期一条龙。
+
+**一键安装**：在 Claude Code 里运行
+
+```bash
+/plugin marketplace add lhg-plugs/lhg-event-plan
+/plugin install lhg-event-plan@lhg-plugs
+```
+
+## 它能帮你做出什么
+
+每条产出先过确定性脚本自查，再交人工复核清单——数字全部数自仓库里的审计脚本，不靠模型"自觉"。
+
+| 自查脚本 | 规则数 | blocker | warning | nit | 覆盖 |
+|---|---|---|---|---|---|
+| `scripts/audit/event_audit.py` | 30 | 6 | 16 | 8 | 预算、排期、物料、风险、目标 |
+| **合计** | **30** | **6** | **16** | **8** | |
+
+- **零 LLM 成本**：规则是纯 Python 脚本，零第三方依赖，本地运行。
+- **坏 / 好对照可验**：`fixtures/` 里备有坏/好用例，冒烟测试断言命中情况。
+- **冒烟全绿**：`python3 smoke_test.py` 51 项全部通过（JSON 合法、frontmatter 完整、命令/skill/agent 齐全）。
 
 ## 它是什么
 
 `lhg-event-plan` 是一个 Claude Code 插件（plugin 为主、skill 为辅）：
 
-- **3 个命令**（小白入口）：`event-plan` 策划一条龙（目标→预算→排期→风险→执行手册），`event-check` 筹备期自查，`event-postmortem` 复盘报告生成器
-- **5 个平台中立 skill**（方法论，可移植到豆包/Workbuddy 等 agent 平台）：目标拆解、预算编制、排期甘特、风险清单、复盘方法论
-- **2 个专家 agent**：活动策划总监、独立审查员
-- **2 个硬门 hooks**：commit 前活动方案审计拦截、写方案时预算求和/风险预案提醒（均可一键豁免）
-- **30 条确定性审计规则**：纯 Python、零第三方依赖，查预算求和、时间冲突、物料遗漏、风险预案缺失
+- **3 个命令**（小白入口）：`event-check` 筹备期自查、`event-plan` 活动策划一条龙、`event-postmortem` 活动复盘报告生成器
+- **5 个平台中立 skill**（方法论，可移植到豆包/Workbuddy 等 agent 平台）：lhg-ep-budget, lhg-ep-goal, lhg-ep-postmortem, lhg-ep-risk, lhg-ep-schedule
+- **2 个专家 agent**：event-architect, event-reviewer
+- **2 个 hooks**（`hooks/`：post_budget_warn.py, pre_commit_event.py），关键操作前自动把关
+- **30 条确定性自查规则**：纯 Python 脚本，见上表
 
-差异化：**预算求和机器校验**（分项加起来≠合计直接 blocker，差一分钱都要说明去向）、**时间冲突检测**（同一人同一天两件到场事自动报警）、**风险项无预案=没写**（"待定""到时候再说"一律打回）、**复盘指标策划期先定**（事后补指标等于没复盘）。
+## 为什么是它
 
-## 3 个命令用法
+不是一个 prompt，而是一套互相兜底的机制：
+
+1. **确定性脚本（机器）+ 人工复核清单（人）**：先跑 `scripts/` 下的审计脚本（共 30 条规则），发现分三级：**blocker**（必须修）、**warning**（修或写豁免理由）、**nit**（顺手修）；再按对应 skill 的复核清单过一遍脚本抓不到的（内容真实性、越权、口径一致）。blocker 清零才算做完；为清零改规则算作弊，不许。
+2. **硬门，不是提醒**：hooks 在关键操作前自动拦截或警告（见 `hooks/`），而不是只在文档里写一句"请注意"。
+3. **方法论沉淀在 skill 里**：流程、检查清单、口径都写在 `skills/` 的方法论里，命令只是入口；换个 agent 平台也能复用同一套做法。
+4. **可验，不是可信**：`fixtures/` 备有坏/好对照用例，`smoke_test.py` 一键验证，规则有没有生效、自己跑一遍就知道。
+
+## 快速上手
+
+```bash
+# 1. 安装（Claude Code 里运行）
+/plugin marketplace add lhg-plugs/lhg-event-plan
+/plugin install lhg-event-plan@lhg-plugs
+
+# 2. 活动策划一条龙：目标拆解→预算编制→排期甘特→风险清单→物料核查→执行手册→复盘
+/lhg-event-plan:event-plan "200人线下发布会" 2026-12-20 10万
+```
 
 | 命令 | 作用 | 示例 |
 |---|---|---|
-| `/lhg-event-plan:event-plan` | 目标→预算→排期→风险→物料→执行手册→复盘框架，一条龙输出 | `/lhg-event-plan:event-plan "200人线下发布会" 2026-12-20 10万` |
-| `/lhg-event-plan:event-check` | 筹备期自查：预算超支/时间冲突/物料遗漏/风险预案四类硬伤 | `/lhg-event-plan:event-check 方案目录` |
-| `/lhg-event-plan:event-postmortem` | 复盘报告：指标对照→预算复盘→得失清单→下次改进清单 | `/lhg-event-plan:event-postmortem 方案目录 "到场173人"` |
-
-## 自查说明
-
-自查 = 确定性脚本（机器）+ 人工评审（人）：
-
-1. 先跑 `scripts/audit/event_audit.py`（30 条规则），零 LLM 成本；
-2. 发现分三级：**blocker**（预算求和不一致、时间冲突、风险无预案、活动日期未定，commit 前 hook 会拦截）、**warning**（无应急预留、物料无负责人、目标无量化指标等）、**nit**（无支付节点、超 5 个指标等洁癖项）；
-3. 再按人工清单过一遍脚本抓不到的（比过价吗？预案演练过吗？责任人知不知道自己是责任人？）。
-
-blocker 清零才算做完；为清零改规则算作弊，不许。筹备期自查至少跑三遍：方案初稿、执行前一周、执行前一天。
-
-## 目录结构
-
-```
-lhg-event-plan/
-├── .claude-plugin/          # plugin.json（插件清单）+ marketplace.json（本仓即市场）
-├── commands/                # 3 个命令：event-plan / event-check / event-postmortem
-├── skills/                  # 5 个平台中立 skill（goal/budget/schedule/risk/postmortem）
-├── agents/                  # 2 个专家 agent（event-architect / event-reviewer）
-├── hooks/                   # 2 个硬门（commit 前审计拦截 / 预算求和与风险预案提醒）+ 豁免说明
-├── scripts/audit/           # 30 条确定性审计规则（零第三方依赖）
-├── fixtures/                # 冒烟测试用例（坏/好对照）
-├── smoke_test.py            # 一键冒烟测试
-├── ATTRIBUTION.md           # 灵感来源与许可声明
-└── LICENSE                  # MIT
-```
+| `/lhg-event-plan:event-check` | 筹备期自查：查预算超支、时间冲突、物料遗漏、风险预案缺失四类硬伤，输出分级报告。 | `/lhg-event-plan:event-check 方案目录` |
+| `/lhg-event-plan:event-plan` | 活动策划一条龙：目标拆解→预算编制→排期甘特→风险清单→物料核查→执行手册→复盘框架，一句话开工。 | `/lhg-event-plan:event-plan "200人线下发布会" 2026-12-20 10万` |
+| `/lhg-event-plan:event-postmortem` | 活动复盘报告生成器：对照策划期定的指标填实际数，输出得失清单与下次改进清单。 | `/lhg-event-plan:event-postmortem 方案目录 "到场173人"` |
 
 ## 什么时候用 / 什么时候不用（FAQ）
 
 **什么时候用：**
 
-- 你要办一场发布会/路演/团建/招商会，不知道从哪下手时 → 用 `/lhg-event-plan:event-plan` 一条龙
-- 活动方案写完了，怕预算算错、时间撞车、风险没预案这类硬伤时 → 跑 `/lhg-event-plan:event-check`
-- 活动办完了，想把经验沉淀成下次可用的复盘报告时 → 用 `/lhg-event-plan:event-postmortem`
-- 你是行政/市场负责人，想给团队立一套"方案提交前必须自查"的纪律时 → 它的 hooks 硬门开箱即用
+- 你需要筹备期自查时 → 用 `/lhg-event-plan:event-check`
+- 你需要活动策划一条龙时 → 用 `/lhg-event-plan:event-plan`
+- 你需要活动复盘报告生成器时 → 用 `/lhg-event-plan:event-postmortem`
 
 **什么时候不用：**
 
-- 你只是组织一次 10 人以内的内部小会、无外部支出 → 杀鸡不用牛刀，口头对一下即可
-- 活动日期还没定、也不打算定 → 没有锚点的排期是空转，先定日期再用它
-- 你希望 AI 无条件按你的数字出预算、不接受"分项求和≠合计"的打回 → 它的预算零容忍会让你烦（这是设计，不是 bug）
+- 你只需要其中一个零散能力时 → 本插件是成套流程，单点需求用更轻量的 skill 更合适
+- 你希望 AI 完全自由发挥、不接受任何自查与硬门时 → 它的规则审计与 hooks 会介入（可关，但那就别装它）
+- 你的场景不在上面命令表覆盖范围内时 → 先看命令表，没有对应命令就别硬套
 
-## lhg-plugs 插件矩阵
+## 目录结构
 
-| 插件 | 一句话 | 安装 |
-|---|---|---|
-| [lhg-event-plan](https://github.com/lhg-plugs/lhg-event-plan) | 活动策划专家：目标→预算/排期/风险清单→执行手册→复盘报告，筹备期一条龙 | `/plugin install lhg-event-plan@lhg-plugs` |
-| *（后续插件在此追加，保持表格格式一致）* | | |
+```
+lhg-event-plan/
+├── smoke_test.py          # 一键冒烟测试
+├── ATTRIBUTION.md         # 灵感来源与许可声明
+├── LICENSE                # MIT
+├── README.md              # 本文件
+├── .claude-plugin/
+├── agents/
+├── commands/
+├── fixtures/
+├── hooks/
+├── scripts/
+├── skills/
+```
 
 ## 自检与反馈
 
-本插件自带质检：每次使用后可跑 `python3 smoke_test.py` 一键验证（JSON 合法、skill/command/agent 完整性、30 条规则、fixtures 命中、hooks 行为）。
+本插件自带质检：每次使用后可跑 `python3 smoke_test.py` 一键验证（本次实测 51 项全部通过）。
 
 发现 bug 或有改进建议，以 `[QC] <一句话问题>` 为标题提交到 https://github.com/lhg-plugs/lhg-event-plan/issues，正文写清"复现步骤 → 实际表现 → 期望表现"。
+
+同门插件见 [lhg-plugs](https://github.com/lhg-plugs)，86 个插件的完整矩阵在 [marketplace](https://github.com/lhg-plugs/marketplace) 维护。
 
 ## 出品：刘洪光
 
